@@ -61,8 +61,8 @@ data_train                                       = data(        1:N_train, :);
 data_test                                        = data(N_train+1:end    , :);
 clear data;
 
-t_train                                          = t(           1:N_train, :);
-t_test                                           = t(   N_train+1:end    , :);
+t_train                                          =    t(        1:N_train, :);
+t_test                                           =    t(N_train+1:end    , :);
 clear t;
 
 %for shuffle = 1:5

@@ -3,6 +3,7 @@
 
 import csv
 import numpy as np
+import pickle
 import random
 import sys
 from gramMatrix import gramMatrix
@@ -10,30 +11,31 @@ from gramMatrix import gramMatrix
 # --------------------------------------------------------------------------------------------------------------------------
 # Variables
 # --------------------------------------------------------------------------------------------------------------------------
+# Oren trained on 225,000 samples, and tested on 25,000. 10,000 epochs. No normalisation.
 
-normalise                                        = False # Works better with false
 verbose                                          = True
 superverbose                                     = False
 
-N_epoch                                          = 100     # Default 100
+normalise                                        = False # Works better with false
+N_epoch                                          = 5     # Default 100
 eta                                              = 0.00001 # Default 0.00001
 
-find_best                                        = True
+find_best                                        = False
 #kernel_parameters_best                           = 4.5 # Cauchy
-#kernel_parameters_best                           = 5.0 # Gaussian
+kernel_parameters_best                           = 44.82556976832949 # Gaussian
 
-#kernel_type                                      = 'gaussian'
-#kernel_parameters                                = [5]
-#kernel_type                                      = 'exponential'
-#kernel_parameters                                = [2]
-kernel_type                                      = 'cauchy'
+kernel_type                                      = 'gaussian'
 kernel_parameters                                = [i/10.0 for i in range(5, 51, 5)]
+#kernel_type                                      = 'exponential'
+#kernel_parameters                                = [i/10.0 for i in range(5, 51, 5)]
+#kernel_type                                      = 'cauchy'
+#kernel_parameters                                = [i/10.0 for i in range(5, 51, 5)]
 #kernel_type                                      = 'student'
 #kernel_parameters                                = [i/10.0 for i in range(5, 51, 5)]
 #kernel_type                                      = 'power'
-#kernel_parameters                                = [2]
+#kernel_parameters                                = [i/10.0 for i in range(5, 51, 5)]
 #kernel_type                                      = 'log'
-#kernel_parameters                                = [2]
+#kernel_parameters                                = [i/10.0 for i in range(5, 51, 5)]
 #kernel_type                                      = 'sigmoid'
 #kernel_parameters                                = [[5, 5]]
 len_kernel_parameters                            = len(kernel_parameters)
@@ -42,20 +44,14 @@ len_kernel_parameters                            = len(kernel_parameters)
 
 # Load the training data:
 
-#IFile                                            = open('../training_10000events.csv', 'rU')
-#for line in IFile:
-#  line_split                                     = line.split(',')
-#  data[] = line_split[1:-2]
-#csv                                              = np.genfromtxt('../training_100000events.csv', delimiter = ',')
-
-with open('../training_10000events.csv', 'rU') as IFile:
+with open('../training_25000events.csv', 'rU') as IFile:
   file_full                                      = [row for row in csv.reader(IFile, delimiter = ',')]
 
 features                                         = file_full[0][1:-2]
 
 D                                                = len(features)
 N                                                = len(file_full) - 1
-N_train                                          = 5000
+N_train                                          = 20000
 N_test                                           = N - N_train
 
 # Map from the given t = {'s', 'b'} to t = {+1, -1}:
@@ -96,7 +92,8 @@ N_per_valset                                     = 200 # Default 200
 N_valset                                         = N_train / N_per_valset
 
 alpha                                            = np.zeros(N_train)
-N_incorrect_train_val                            = np.zeros((len_kernel_parameters, N_valset))
+if find_best:
+  N_incorrect_train_val                          = np.zeros((len_kernel_parameters, N_valset))
 
 # --------------------------------------------------------------------------------------------------------------------------
 # Calculation
@@ -308,3 +305,65 @@ print                   '              N_bkg: %4d (%6.2f%%)   [Target: %4d (%6.2
 print                   '      Misclassified: %4d (%6.2f%%)' %                                                             \
                         (N_incorrect_test , float(N_incorrect_test ) / float(N_test ) * 100)
 print                   ''
+
+# --------------------------------------------------------------------------------------------------------------------------
+
+Pickle_Data                                      = {}
+
+Pickle_Data['normalise']                         = normalise
+Pickle_Data['N_epoch']                           = N_epoch
+Pickle_Data['eta']                               = eta
+
+Pickle_Data['find_best']                         = find_best
+Pickle_Data['kernel_type']                       = kernel_type
+Pickle_Data['kernel_parameters_best']            = kernel_parameters_best
+
+Pickle_Data['D']                                 = D
+Pickle_Data['N']                                 = N
+Pickle_Data['N_trn']                             = N_train
+Pickle_Data['N_tst']                             = N_test
+if find_best:
+  Pickle_Data['N_valset']                        = N_valset
+  Pickle_Data['N_per_valset']                    = N_per_valset
+
+Pickle_Data['t_trn']                             = t_train
+Pickle_Data['t_tst']                             = t_test
+Pickle_Data['y_trn']                             = y_train
+Pickle_Data['y_tst']                             = y_test
+
+Pickle_Data['N_sig_t_trn']                       = N_sig_t_train
+Pickle_Data['N_bkg_t_trn']                       = N_bkg_t_train
+Pickle_Data['N_sig_t_tst']                       = N_sig_t_test
+Pickle_Data['N_bkg_t_tst']                       = N_bkg_t_test
+
+Pickle_Data['N_sig_y_trn']                       = N_sig_y_train
+Pickle_Data['N_bkg_y_trn']                       = N_bkg_y_train
+Pickle_Data['N_sig_y_tst']                       = N_sig_y_test
+Pickle_Data['N_bkg_y_tst']                       = N_bkg_y_test
+
+if find_best:
+  Pickle_Data['N_incorrect_trn_val']             = N_incorrect_train_val
+Pickle_Data['N_incorrect_trn']                   = N_incorrect_train
+Pickle_Data['N_incorrect_tst']                   = N_incorrect_test
+
+Pickle_File                                      = open(   'xmachina_kp'
+                                                         + '_' + str(N)
+                                                         + '_' + str(N_epoch)
+                                                         + '_' + str(eta)
+                                                         + '_' + kernel_type
+                                                         +       normalise * '_normalise'
+                                                         + '.pickle', 'w'   )
+pickle.dump(Pickle_Data, Pickle_File)
+Pickle_File.close()
+
+# To load the pickle and put the variables straight into memory ...
+#
+#   import pickle
+#
+#   Pickle_File = open('<pickle_file_name>', 'r')
+#   Pickle_Data = pickle.load(Pickle_File)
+#   locals().update(Pickle_Data)
+#
+#   ... or more efficiently doing all three steps at once ...
+#
+#   locals().update(pickle.load(open('<pickle_file_name>', 'r')))

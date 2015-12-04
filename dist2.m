@@ -1,4 +1,4 @@
-%function n2 = dist2(x, c)
+function n2 = dist2(x, c)
 %DIST2	Calculates squared distance between two sets of points.
 %
 %	Description

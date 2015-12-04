@@ -1,1 +1,1 @@
-From CMPT419/726 assignment 2 spam recognition kernel perceptron
+From CMPT419/726 assignment 2 kernelised perceptron for spam recognition
